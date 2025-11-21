@@ -21,6 +21,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const decodeToken = (token: string) => {
     return (jwtDecode as any)(token);
   };
+  const normalizeUser = (decoded: any) => {
+    if (!decoded) return null;
+    const username =
+      decoded.username ||
+      decoded.preferred_username ||
+      decoded.user_name ||
+      decoded.sub ||
+      decoded.email ||
+      null;
+    const name =
+      decoded.name || decoded.given_name || decoded.full_name || null;
+    return { ...decoded, username, name };
+  };
   useEffect(() => {
     const t = token || localStorage.getItem(TOKEN_KEY);
     if (t) {
@@ -34,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .toLowerCase()
               .includes("admin");
         if (hasAdmin) {
-          setUser(decoded);
+          setUser(normalizeUser(decoded));
           setToken(t);
         } else {
           setToken(null);
@@ -69,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       localStorage.setItem(TOKEN_KEY, resp.token);
       setToken(resp.token);
-      setUser(decoded);
+      setUser(normalizeUser(decoded));
       setLoading(false);
     } catch (e) {
       localStorage.removeItem(TOKEN_KEY);
